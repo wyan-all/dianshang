@@ -1,6 +1,6 @@
 <template>
   <div>
-    home
+    记录查询
     <el-form :inline="true" :model="querryInfo" class="demo-form-inline">
       <el-form-item label="字段">
         <el-input
@@ -15,6 +15,16 @@
           <!---value 属性规定在表单被提交时被发送到服务器的值。 -->
         </el-select>
       </el-form-item>
+      <!---选择日期 -->
+      <span class="demonstration">日期区间</span>
+     <el-date-picker
+      v-model="querryInfo.value1"
+      type="daterange"
+      start-placeholder="开始日期"
+      end-placeholder="结束日期"
+      :default-time="['00:00:00', '23:59:59']">
+    </el-date-picker>
+
       <el-form-item>
         <el-button type="primary" @click="onSubmit">查询</el-button>
       </el-form-item>
@@ -61,6 +71,7 @@ export default {
     return {
       // 获取参数列表的对象
       querryInfo: {
+        value1: '',
         user: '', // 查询 字段1
         region: '', // 下拉选框的value值
         pagenum: 1, // 当前页码
@@ -82,16 +93,23 @@ export default {
   methods: {
     // 按字段查询数据
     onSubmit () {
-      console.log('submit!')
+      console.log('submit!', this.querryInfo.value1)
       this.querryInfo.pagenum = 1
       this.querryInfo.pagesize = 2
       const that = this // 使用that解决函数内部this指向问题
+      console.log(this.querryInfo.user, this.querryInfo.region)
+      if (this.querryInfo.user === '') {
+        return alert('请输入要搜索的字段1')
+      }
+      if (this.querryInfo.region === '') {
+        return alert('请输入要选择框')
+      }
       this.pathapi = 'http://localhost:3000/quer'
       this.$http
         .get(this.pathapi, { params: this.querryInfo }) //
         .then(function (res) {
           console.log(typeof res.data)
-
+          console.log(typeof that.querryInfo.value1, that.querryInfo.region)
           that.tableData = res.data
           that.totalnum = res.data.length
           console.log(that.tableData)
@@ -120,10 +138,10 @@ export default {
     handleSizeChange (newsize) {
       console.log('页码尺寸改变:', newsize)
       this.querryInfo.pagesize = newsize
-      if (this.querryInfo.user === '' && this.querryInfo.region === '') {
-        this.pathapi = 'http://localhost:3000/path'
-      } else {
+      if (this.querryInfo.user !== '' && this.querryInfo.region !== '') {
         this.pathapi = 'http://localhost:3000/quer'
+      } else {
+        this.pathapi = 'http://localhost:3000/path'
       }
       this.getList(this.pathapi)
       // 向后台请求当前列表数量的数据
@@ -145,4 +163,5 @@ export default {
 }
 </script>
 
-<style></style>
+<style>
+</style>
