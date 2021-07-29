@@ -78,6 +78,7 @@ export default {
         pagesize: 2 // 每页显示的列表条数
 
       },
+      temp: false,
       totalnum: 0, // 总的查询数量，这里目前有问题，需要开发时和后台确认
       pathapi: 'http://localhost:3000/path', // 总条数
       tableData: [{
@@ -112,6 +113,7 @@ export default {
           console.log(typeof that.querryInfo.value1, that.querryInfo.region)
           that.tableData = res.data
           that.totalnum = res.data.length
+          that.temp = true
           console.log(that.tableData)
         })
         .catch(function (err) {
@@ -138,9 +140,17 @@ export default {
     handleSizeChange (newsize) {
       console.log('页码尺寸改变:', newsize)
       this.querryInfo.pagesize = newsize
-      if (this.querryInfo.user !== '' && this.querryInfo.region !== '') {
+      if (this.querryInfo.user !== '' && this.querryInfo.region !== '' && this.temp === true) {
         this.pathapi = 'http://localhost:3000/quer'
       } else {
+        // this.querryInfo.value1 = ''
+        // this.querryInfo.user = ''
+        // this.querryInfo.region = ''
+        // 存在一个问题：
+        // 当在查询字段将所有必填字段输入完后，没有点击查询，点击了改变页码和列表显示条数的时间为之后，向后台发送的请求字段中会显示对应的查询字段，
+        // 从而调用的时后台查询功能的api，返回前端的将是特定字段以及特定页码和列表条数的结果
+        // 需要明确这种方式下具体是按字段查询还是保持原来的查询结果仅调整页码和列表数目。
+        // 从而定义了temp，想要只有点击查询才调用查询接口，页码改变但是查询字段保持原来字段不变，但是后台传入了字段中查询字段仍是改变的，须在开发时和后台协商
         this.pathapi = 'http://localhost:3000/path'
       }
       this.getList(this.pathapi)
@@ -151,10 +161,10 @@ export default {
     handleCurrentChange (newpage) {
       console.log('页码改变pagenum:', newpage)
       this.querryInfo.pagenum = newpage
-      if (this.querryInfo.user === '' && this.querryInfo.region === '') {
-        this.pathapi = 'http://localhost:3000/path'
-      } else {
+      if (this.querryInfo.user !== '' && this.querryInfo.region !== '' && this.temp === true) {
         this.pathapi = 'http://localhost:3000/quer'
+      } else {
+        this.pathapi = 'http://localhost:3000/path'
       }
       this.getList(this.pathapi)
       // 向后台请求当前页码的数据
@@ -164,4 +174,11 @@ export default {
 </script>
 
 <style>
+.demonstration {
+margin-right:10px
+}
+
+.el-form--inline .el-form-item__content  {
+  margin-left:10px
+}
 </style>

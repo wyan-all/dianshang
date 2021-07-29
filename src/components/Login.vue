@@ -52,7 +52,10 @@ export default {
 }
 </script>
 
-<style>
+<!--style改变element ui的样式：
+在浏览器中打开开发者模式查看要修改元素的标签名、类名等，
+在本地文件中添加父类，通过级联选择器（父子、祖先、同级等） 匹配要修改的元素，进行样式修改-->
+<style >
 .container {
   background-color: rgb(204, 169, 169);
   width: 100%;
@@ -69,4 +72,11 @@ export default {
   top: 50%;
   transform: translate(-50%, -50%);
 }
+
+.loginbox .el-form-item__content {
+  margin-right: 32px;
+  margin-top: 32px;
+  padding-left:45px
+}
+
 </style>
