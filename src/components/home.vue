@@ -6,8 +6,8 @@
       <!---具体的字段名等还没有定义和绑定 -->
       <el-form-item label="客户编码：">
         <el-input
-          v-model="querryInfo.customerCode "
-          placeholder="请输入要搜索的字段1"
+          v-model="querryInfo.customerId "
+          placeholder="请输入客户编码"
         ></el-input>
       </el-form-item>
       <el-form-item label="客户名称：">
@@ -142,7 +142,7 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
       :current-page="querryInfo.pageNo"
-      :page-sizes="[1, 2, 3, 4]"
+      :page-sizes="[5,10, 15, 20]"
       :page-size="querryInfo.pageSize"
       layout="total, sizes, prev, pager, next, jumper"
       :total="totalCount">
@@ -155,20 +155,24 @@ export default {
   data () {
     return {
       // 获取参数列表的对象
+      quer: {
+        pageNo: 1, // 当前页码
+        pageSize: 10 // 每页显示的列表条数
+      },
       querryInfo: {
         value1: '', // 时间,开始时间begin [0] end结束时间[1]
-        customerCode: '', // 查询 客户编码
+        customerId: '', // 查询 客户编码
         customerName: '', // 客户名称，支持模糊查询
         accesskey: '', // 客户的accesskey
         object: '', //  操作对象,如压制是ip ，域名无忧
         module: '', // 模块
         traceId: '', // 调用链
+        begin: '',
         pageNo: 1, // 当前页码
-        pageSize: 10 // 每页显示的列表条数
-
+        pageSize: 10, // 开始时间 毫秒值
+        end: ''// 结束时间 毫秒值
       },
-      temp: false,
-      totalCount: 0, // 总的查询数量，这里目前有问题，需要开发时和后台确认
+      totalCount: 0,
       pathapi: 'http://localhost:3000/api/api/', // 总条数
       // 列表显示区的信息
       tableData: [{
@@ -193,45 +197,32 @@ export default {
   methods: {
     // 按字段查询数据
     onSubmit () {
-      console.log('submit!', this.querryInfo.value1)
+      // console.log('submit!', this.querryInfo.value1)
       this.querryInfo.pageNo = 1
       this.querryInfo.pageSize = 10
-      const that = this // 使用that解决函数内部this指向问题
-      // console.log(this.querryInfo.customerCode, this.querryInfo.region)
-      if (this.querryInfo.customerCode === '') {
-        return alert('请输入要搜索的字段1')
+      // console.log(this.quer)
+      this.pathapi = 'http://localhost:3000/api/api/'
+      this.querryInfo.begin = new Date(this.querryInfo.value1[0]).getTime()
+      this.querryInfo.end = new Date(this.querryInfo.value1[1]).getTime()
+      for (var pro in this.querryInfo) {
+        if (this.querryInfo[pro]) {
+          this.quer[pro] = this.querryInfo[pro]
+        }
       }
-      // if (this.querryInfo.region === '') {
-      //   return alert('请输入要选择框')
-      // }
-      // new Date('2017-06-06 15:31:09').getTime();
-      const startTime = new Date(this.querryInfo.value1[0]).getTime()
-      const endTime = new Date(this.querryInfo.value1[1]).getTime()
-      console.log(startTime, endTime)
-      this.pathapi = 'http://localhost:3000/quer'
-      this.$http
-        .get(this.pathapi, { params: this.querryInfo }) //
-        .then(function (res) {
-          console.log(typeof res.data)
-          // console.log(typeof that.querryInfo.value1, that.querryInfo.region)
-          that.tableData = res.data
-          that.totalCount = res.data.length
-          that.temp = true
-          console.log(that.tableData)
-        })
-        .catch(function (err) {
-          console.log(err)
-        })
+      delete this.quer.value1 // 删除value1属性，不传给后台
+      // console.log(this.quer)
+      this.getList(this.pathapi)
+      this.querryInfo.pageNo = 1
+      this.querryInfo.pageSize = 10
+      console.log('查询结束')
     },
     getList (path) {
       const that = this // 使用that解决函数内部this指向问题
       this.$http
-        .get(this.pathapi, { params: this.querryInfo }) //
+        .get(this.pathapi, { params: this.quer }) //
         .then(function (res) {
-          console.log(res.data)
           that.tableData = res.data.result.results
           that.totalCount = res.data.result.totalCount
-          console.log(that.tableData)
           // 处理request和response中的字段
           for (var i = 0; i < that.tableData.length; i++) {
             // console.log(typeof that.tableData[i].request)
@@ -249,21 +240,10 @@ export default {
     // 监听pageSize改变的函数
     handleSizeChange (newsize) {
       console.log('页码尺寸改变:', newsize)
+      this.quer.pageSize = newsize
       this.querryInfo.pageSize = newsize
-      if (this.querryInfo.customerCode !== '' && this.temp === true) {
-        this.pathapi = 'http://localhost:3000/quer'
-      } else {
-        // this.querryInfo.value1 = ''
-        // this.querryInfo.customerCode = ''
-        // this.querryInfo.region = ''
-        // 存在一个问题：
-        // 当在查询字段将所有必填字段输入完后，没有点击查询，点击了改变页码和列表显示条数的时间为之后，向后台发送的请求字段中会显示对应的查询字段，
-        // 从而调用的时后台查询功能的api，返回前端的将是特定字段以及特定页码和列表条数的结果
-        // 需要明确这种方式下具体是按字段查询还是保持原来的查询结果仅调整页码和列表数目。
-        // 从而定义了temp，想要只有点击查询才调用查询接口，页码改变但是查询字段保持原来字段不变，但是后台传入了字段中查询字段仍是改变的，须在开发时和后台协商
-        this.pathapi = 'http://localhost:3000/path'
-      }
       this.getList(this.pathapi)
+      console.log('end:页码尺寸改变', this.quer)
       // 向后台请求当前列表数量的数据
     },
 
@@ -271,12 +251,9 @@ export default {
     handleCurrentChange (newpage) {
       console.log('页码改变pageNo:', newpage)
       this.querryInfo.pageNo = newpage
-      if (this.querryInfo.customerCode !== '' && this.temp === true) {
-        this.pathapi = 'http://localhost:3000/quer'
-      } else {
-        this.pathapi = 'http://localhost:3000/path'
-      }
+      this.quer.pageNo = newpage
       this.getList(this.pathapi)
+      console.log('end:页码改变pageNo', this.quer)
       // 向后台请求当前页码的数据
     },
     handleEdit (index, row) {
