@@ -2,7 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Log from '../components/Login.vue'
 import Home from '../components/home'
-import '../mock'
+// import '../mock'
 
 Vue.use(VueRouter)
 

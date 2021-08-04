@@ -1,6 +1,6 @@
 <template>
   <div>
-    日志查询
+    <div class="logSpan">日志查询</div>
     <el-form :inline="true" :model="querryInfo" class="demo-form-inline">
       <!---客户相关 字段 -->
       <!---具体的字段名等还没有定义和绑定 -->
@@ -24,10 +24,10 @@
       </el-form-item>
 
       <!---其他字段 -->
-      <el-form-item label="IP/域名：">
+      <el-form-item label="操作对象：">
         <el-input
           v-model="querryInfo.object"
-          placeholder="请输入IP/域名"
+          placeholder="请输入操作对象"
         ></el-input>
       </el-form-item>
       <el-form-item label="模块：">
@@ -50,8 +50,9 @@
       type="datetimerange"
       start-placeholder="开始日期"
       end-placeholder="结束日期"
-      :default-time="['00:00:00', '23:59:59']">
-    </el-date-picker>
+      :default-time="['00:00:00', '23:59:59']"
+      style="height:40px">
+     </el-date-picker>
 
       <el-form-item>
         <el-button type="primary" @click="onSubmit">查询</el-button>
@@ -59,7 +60,7 @@
     </el-form>
 
     <!--- 列表区域-->
-
+  <div class="tabelArea">
     <el-table
       :data="tableData"
       style="width: 100%" border stripe >
@@ -67,42 +68,55 @@
       <el-table-column
         prop="traceId"
         label="调用链"
-        width="180">
+        width="360">
       </el-table-column>
       <el-table-column
         prop="customerId"
         label="客户编码"
-        width="180">
+        width="220">
       </el-table-column>
       <el-table-column
         prop="customerName"
-        label="客户名称">
+        label="客户名称"
+        width="260">
       </el-table-column>
       <el-table-column
         prop="object"
-        label="操作对象">
+        label="操作对象"
+        width="220">
       </el-table-column>
       <el-table-column
         prop="beginMs"
-        label="开始时间">
+        label="开始时间"
+        width="220">
       </el-table-column>
       <el-table-column
         prop="spendMS"
-        label="时延">
+        label="时延(ms)"
+        width="220">
       </el-table-column>
       <el-table-column
         prop="status"
-        label="响应状态码">
+        label="响应状态码"
+        width="210">
+      </el-table-column>
+      <el-table-column
+        prop="module"
+        label="模块"
+        width="200">
       </el-table-column>
       <el-table-column
         prop="url"
-        label="请求url">
+        label="请求url"
+        >
       </el-table-column>
+      <!--
       <el-table-column
         prop="responseMessage"
         label="响应消息体">
       </el-table-column>
-      <el-table-column label="详情" type="expand">
+      -->
+      <el-table-column label="详情" type="expand" width="120">
         <template slot-scope="scope">
             <el-form label-position="left" inline class="demo-table-expand">
           <el-form-item label="tonce">
@@ -136,6 +150,7 @@
         </template>
       </el-table-column>
     </el-table>
+    </div>
 
     <!--- 分页区域-->
     <el-pagination
@@ -145,7 +160,9 @@
       :page-sizes="[5,10, 15, 20]"
       :page-size="querryInfo.pageSize"
       layout="total, sizes, prev, pager, next, jumper"
-      :total="totalCount">
+      :total="totalCount"
+      style="padding:20px 5px;"
+      >
     </el-pagination>
   </div>
 </template>
@@ -160,20 +177,20 @@ export default {
         pageSize: 10 // 每页显示的列表条数
       },
       querryInfo: {
-        value1: '', // 时间,开始时间begin [0] end结束时间[1]
+        value1: '', // 时间,开始时间beginMs [0] end结束时间[1]
         customerId: '', // 查询 客户编码
         customerName: '', // 客户名称，支持模糊查询
         accesskey: '', // 客户的accesskey
         object: '', //  操作对象,如压制是ip ，域名无忧
         module: '', // 模块
         traceId: '', // 调用链
-        begin: '',
+        beginMs: '',
         pageNo: 1, // 当前页码
         pageSize: 10, // 开始时间 毫秒值
-        end: ''// 结束时间 毫秒值
+        endMs: ''// 结束时间 毫秒值
       },
       totalCount: 0,
-      pathapi: 'http://localhost:3000/api/api/', // 总条数
+      pathapi: '/api/log_api/list', // 总条数
       // 列表显示区的信息
       tableData: [{
         traceId: '', // 调用链
@@ -201,9 +218,9 @@ export default {
       this.querryInfo.pageNo = 1
       this.querryInfo.pageSize = 10
       // console.log(this.quer)
-      this.pathapi = 'http://localhost:3000/api/api/'
-      this.querryInfo.begin = new Date(this.querryInfo.value1[0]).getTime()
-      this.querryInfo.end = new Date(this.querryInfo.value1[1]).getTime()
+      // this.pathapi = 'http://localhost:3000/api/api/'
+      this.querryInfo.beginMs = new Date(this.querryInfo.value1[0]).getTime()
+      this.querryInfo.endMs = new Date(this.querryInfo.value1[1]).getTime()
       for (var pro in this.querryInfo) {
         if (this.querryInfo[pro]) {
           this.quer[pro] = this.querryInfo[pro]
@@ -250,15 +267,11 @@ export default {
     // 监听页码值改变事件
     handleCurrentChange (newpage) {
       console.log('页码改变pageNo:', newpage)
-      this.querryInfo.pageNo = newpage
       this.quer.pageNo = newpage
+      this.querryInfo.pageNo = newpage
       this.getList(this.pathapi)
       console.log('end:页码改变pageNo', this.quer)
       // 向后台请求当前页码的数据
-    },
-    handleEdit (index, row) {
-      console.log(index, row)
-      console.log(row.accesskey)
     }
   }
 }
@@ -269,8 +282,18 @@ margin-right:10px
 }
 -->
 <style>
+.logSpan {
+padding:26px 0;
+font-size:20px;
+color: #606266;
+}
 .demonstration {
-margin-right:10px
+margin-right:12px;
+font-size:14px;
+color: #606266;
+}
+.demo-form-inline {
+  padding-bottom:10px
 }
 .el-range-editor.el-input__inner {
   margin-right: 10px
@@ -300,4 +323,10 @@ margin-right:10px
     font-size: 14px;
     font-weight:bold;
 }
+
+.tabelArea {
+    margin: 0 auto;
+    width:95%;
+}
+
 </style>
